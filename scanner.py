@@ -1,25 +1,42 @@
 import socket
+import threading
 
 def scan_ports(target, ports):
     open_ports = []
-    print(f"\n[*] Scanning {target} ...\n")
+    lock = threading.Lock()
+    print(f"\n[*] Scanning {target}...\n")
 
-    for port in ports:
+    def scan(port):
         try:
-            s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-            s.settimeout(1)
-            result = s.connect_ex((target,port))
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(0.5)
+            result = s.connect_ex((target, port))
             if result == 0:
-                print(f"[+] port {port} is OPEN")
-                open_ports.append(port)
+                with lock:
+                    print(f"[+] Port {port} is OPEN")
+                    open_ports.append(port)
             s.close()
-        except socket.error as e:
-            print(f"[-] Error: {e}")
+        except:
+            pass
 
-    return open_ports
+    threads = []
+    for port in ports:
+        t = threading.Thread(target=scan, args=(port,))
+        threads.append(t)
+        t.start()
+
+        if len(threads) >= 100:
+            for t in threads:
+                t.join()
+            threads = []
+
+    for t in threads:
+        t.join()
+
+    return sorted(open_ports)
+
 if __name__ == "__main__":
     target = input("Enter target IP: ")
-    ports = range(1,1025)
+    ports = range(1, 65536)
     open_ports = scan_ports(target, ports)
-    print(f"\n[+] open ports: {open_ports}")
-
+    print(f"\n[*] Open ports: {open_ports}")
