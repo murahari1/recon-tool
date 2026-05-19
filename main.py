@@ -7,7 +7,7 @@ def main():
     target = input("Enter target IP: ")
     
     print("\n[*] Starting port scan...")
-    open_ports = scan_ports(target, range(1, 1025))
+    open_ports = scan_ports(target, range(1, 65536))
 
     print("\n[*] Grabbing banners...")
     banners = {}
