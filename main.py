@@ -1,7 +1,7 @@
 from scanner import scan_ports
 from banner import grab_banner
 from report import generate_report
-from cve_lookup import search_cve, extract_keyword
+from cve_lookup import search_cve, extract_keyword, PORT_SERVICES
 
 def main():
     target = input("Enter target IP: ")
@@ -19,11 +19,18 @@ def main():
 
     print("\n[*] Looking up CVEs...")
     cves = {}
-    for port, banner in banners.items():
-        keyword = extract_keyword(banner)
-        found_cves = search_cve(keyword)
-        if found_cves:
-            cves[port] = found_cves
+    for port in open_ports:
+        banner = banners.get(port)
+        if banner:
+            keyword = extract_keyword(banner)
+        else:
+            keyword = PORT_SERVICES.get(port)
+
+        if keyword:
+            print(f"[*] Searching CVEs for port {port}: {keyword}")
+            found_cves = search_cve(keyword)
+            if found_cves:
+                cves[port] = found_cves
 
     generate_report(target, open_ports, banners, cves)
     print("\n[+] Done.")
